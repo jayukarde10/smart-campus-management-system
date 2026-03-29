@@ -2,22 +2,26 @@ const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from header
-    const token = req.header("Authorization");
+    const authHeader = req.header("Authorization");
 
-    if (!token) {
+    if (!authHeader) {
       return res.status(401).json({ message: "No token, access denied" });
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, "secretkey");
+    // 🔥 Extract token from "Bearer TOKEN"
+    const token = authHeader.split(" ")[1];
 
-    // Attach user to request
+    if (!token) {
+      return res.status(401).json({ message: "Invalid token format" });
+    }
+
+    const decoded = jwt.verify(token, "secretkey");
     req.user = decoded;
 
-    next(); // go to next step
+    next();
 
   } catch (error) {
+    console.error(error);
     res.status(401).json({ message: "Invalid token" });
   }
 };
