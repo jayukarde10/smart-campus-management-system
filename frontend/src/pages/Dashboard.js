@@ -3,35 +3,42 @@ import API from "../services/api";
 
 function Dashboard() {
   const [data, setData] = useState("");
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-      if (!token) {
-        alert("Please login first");
-        window.location.href = "/";
-        return;
-      }
-
-      const res = await API.get("/dashboard", {
-        headers: {
-          Authorization: `Bearer ${token}`
+        if (!token) {
+          window.location.href = "/";
+          return;
         }
-      });
 
-      setData(res.data.message);
+        const res = await API.get("/dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-    } catch (error) {
-      console.error(error);
-      alert("Unauthorized");
-      window.location.href = "/";
-    }
-  };
+        setData(res.data.message);
 
-  fetchData();
-}, []);
+      } catch (error) {
+        console.error(error);
+        alert("Session expired, please login again");
+        localStorage.removeItem("token"); // 🔥 important
+        window.location.href = "/";
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <h3 className="text-center mt-5">Loading...</h3>;
+  }
 
   return (
     <div className="container mt-5">
