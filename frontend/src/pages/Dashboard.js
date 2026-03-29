@@ -4,26 +4,34 @@ import API from "../services/api";
 function Dashboard() {
   const [data, setData] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        console.log("TOKEN:", token);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-        const res = await API.get("/dashboard", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        setData(res.data.message);
-      } catch (error) {
-        alert("Unauthorized");
+      if (!token) {
+        alert("Please login first");
+        window.location.href = "/";
+        return;
       }
-    };
 
-    fetchData();
-  }, []);
+      const res = await API.get("/dashboard", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      setData(res.data.message);
+
+    } catch (error) {
+      console.error(error);
+      alert("Unauthorized");
+      window.location.href = "/";
+    }
+  };
+
+  fetchData();
+}, []);
 
   return (
     <div className="container mt-5">
