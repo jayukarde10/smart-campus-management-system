@@ -5,25 +5,28 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
-    try {
-      const res = await API.post("/auth/login", {
-        email,
-        password
-      });
+const handleLogin = async () => {
+  try {
+    const res = await API.post("/auth/login", {
+      email,
+      password
+    });
 
-      // 🔐 Save token
-      localStorage.setItem("token", res.data.token);
+    console.log("LOGIN RESPONSE:", res.data); // 👈 DEBUG
 
-      alert("Login successful");
+    // 🔥 Save token properly
+    localStorage.setItem("token", res.data.token);
 
-      // redirect (simple for now)
-      window.location.href = "/dashboard";
+    alert("Login successful");
 
-    } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
-    }
-  };
+    // redirect
+    window.location.href = "/dashboard";
+
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Login failed");
+  }
+};
 
   return (
     <div className="container mt-5">
