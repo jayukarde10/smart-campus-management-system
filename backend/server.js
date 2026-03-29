@@ -4,6 +4,9 @@ const cors = require("cors");
 
 const app = express();
 
+const protectedRoutes = require("./routes/protectedRoutes");
+app.use("/api", protectedRoutes);
+
 // ✅ Middleware FIRST
 app.use(cors());
 app.use(express.json());
