@@ -4,21 +4,28 @@ const cors = require("cors");
 
 const app = express();
 
-const protectedRoutes = require("./routes/protectedRoutes");
-app.use("/api", protectedRoutes);
-
-// ✅ Middleware FIRST
+// 🔥 1. CORS FIRST
 app.use(cors({
   origin: "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+app.options("*", cors());
+
+// 🔥 2. Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// 🔥 3. Routes AFTER middleware
 const authRoutes = require("./routes/authRoutes");
-app.use("/api/auth", authRoutes);
+const protectedRoutes = require("./routes/protectedRoutes");
 
+app.use("/api/auth", authRoutes);
+app.use("/api", protectedRoutes);
+
+// Test route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });

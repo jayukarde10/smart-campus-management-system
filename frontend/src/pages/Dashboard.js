@@ -17,7 +17,7 @@ function Dashboard() {
 
         const res = await API.get("/dashboard", {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: "Bearer " + token
           }
         });
 
