@@ -1,3 +1,4 @@
+import Navbar from "../components/Navbar";
 import React, { useEffect, useState } from "react";
 import API from "../services/api";
 
@@ -41,10 +42,13 @@ function Dashboard() {
   }
 
   return (
+  <>
+    <Navbar />
     <div className="container mt-5">
       <h2>{data}</h2>
     </div>
-  );
+  </>
+);
 }
 
 export default Dashboard;

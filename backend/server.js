@@ -12,7 +12,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors());
+
 
 // 🔥 2. Body parsing
 app.use(express.json());
