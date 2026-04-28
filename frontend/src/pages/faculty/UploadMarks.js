@@ -18,6 +18,7 @@ const UploadMarks = () => {
     examType: 'midterm',
     semester: 'Current'
   });
+  const [individualFile, setIndividualFile] = useState(null);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -49,14 +50,24 @@ const UploadMarks = () => {
 
     try {
       const student = students.find(s => s._id === form.studentId);
-      await API.post('/faculty/marks', {
-        ...form,
-        studentName: student?.name || '',
-        studentEmail: student?.email || ''
+      const formData = new FormData();
+      formData.append('studentId', form.studentId);
+      formData.append('studentName', student?.name || '');
+      formData.append('studentEmail', student?.email || '');
+      formData.append('subject', form.subject);
+      formData.append('marks', form.marks);
+      formData.append('totalMarks', form.totalMarks);
+      formData.append('examType', form.examType);
+      formData.append('semester', form.semester);
+      if (individualFile) formData.append('file', individualFile);
+
+      await API.post('/faculty/marks', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setMsg('Marks uploaded successfully!');
       setMsgType('success');
       setForm({ studentId: '', subject: '', marks: '', totalMarks: '100', examType: 'midterm', semester: 'Current' });
+      setIndividualFile(null);
       fetchMarks();
     } catch (err) {
       setMsg(err.response?.data?.message || 'Failed to upload marks');
@@ -173,6 +184,11 @@ const UploadMarks = () => {
                   <input className="premium-input" placeholder="Sem 5" value={form.semester} onChange={(e) => setForm({...form, semester: e.target.value})} />
                 </div>
               </div>
+              <div className="mb-4">
+                <label className="form-label fw-bold text-muted small">Individual Result PDF (optional)</label>
+                <input type="file" className="form-control" accept=".pdf" onChange={e => setIndividualFile(e.target.files[0])} />
+                {individualFile && <small className="text-muted d-block mt-1">📄 {individualFile.name}</small>}
+              </div>
               <button type="submit" className="btn-dynamic w-100 py-3" style={{ backgroundColor: 'var(--secondary)' }} disabled={loading}>
                 {loading ? 'Uploading...' : 'Upload Marks'}
                 {!loading && <Upload size={18} />}
@@ -237,9 +253,10 @@ const UploadMarks = () => {
                           </span>
                         </td>
                         <td className="px-3">
-                          <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1">
+                          <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 mb-1 d-inline-block">
                             {m.examType}
                           </span>
+                          {m.fileUrl && <span className="d-block text-muted small" style={{fontSize:'11px'}}>📎 PDF Attached</span>}
                         </td>
                         <td className="px-3 text-end">
                           <button className="btn btn-sm btn-outline-danger px-2 py-1" onClick={() => handleDelete(m._id)}>
