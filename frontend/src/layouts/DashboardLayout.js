@@ -4,7 +4,8 @@ import { jwtDecode } from 'jwt-decode';
 import { 
   LayoutDashboard, Users, BookOpen, Calendar, 
   CreditCard, Bell, MessageSquare, Settings, 
-  LogOut, Menu, X, FileText, ClipboardList, TrendingUp, CheckSquare, QrCode
+  LogOut, Menu, X, FileText, ClipboardList, TrendingUp, CheckSquare, QrCode,
+  Shield, UserCheck, Database, Lock
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -14,9 +15,11 @@ const DashboardLayout = () => {
   
   const token = localStorage.getItem('token');
   let role = 'student';
+  let userName = '';
   try {
     const decoded = jwtDecode(token);
     role = decoded.role || 'student';
+    userName = decoded.name || '';
   } catch (e) {}
 
   const studentSections = [
@@ -28,11 +31,11 @@ const DashboardLayout = () => {
         { path: '/student/marks', icon: <FileText size={18} />, label: 'Marks / Results' },
         { path: '/student/timetable', icon: <Calendar size={18} />, label: 'Timetable' },
         { path: '/student/fees', icon: <CreditCard size={18} />, label: 'Fee Status' },
-        { path: '/student/notifications', icon: <Bell size={18} />, label: 'Announcements' },
+        { path: '/student/notifications', icon: <Bell size={18} />, label: 'Notices & Alerts' },
       ]
     },
     {
-      title: 'Analytics & Tasks (NEW 🔥)',
+      title: 'Analytics & Tasks',
       links: [
         { path: '/student/analytics', icon: <TrendingUp size={18} />, label: 'Performance Graphs' },
         { path: '/student/tasks', icon: <CheckSquare size={18} />, label: 'Personal Tracker' },
@@ -61,6 +64,7 @@ const DashboardLayout = () => {
     {
       title: 'Advanced Modules',
       links: [
+        { path: '/faculty/announcements', icon: <Bell size={18} />, label: 'Notices & Uploads' },
         { path: '/faculty/events', icon: <QrCode size={18} />, label: 'Event Management (QR)' },
         { path: '/faculty/analytics', icon: <TrendingUp size={18} />, label: 'Department Analytics' },
         { path: '/faculty/communication', icon: <MessageSquare size={18} />, label: 'Communication Suite' },
@@ -68,11 +72,52 @@ const DashboardLayout = () => {
     }
   ];
 
-  const sections = role === 'faculty' ? facultySections : studentSections;
+  const adminSections = [
+    {
+      title: 'Administration',
+      links: [
+        { path: '/admin/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard Overview' },
+        { path: '/admin/faculty-approvals', icon: <UserCheck size={18} />, label: 'Faculty Approvals' },
+        { path: '/admin/users', icon: <Users size={18} />, label: 'All Users' },
+      ]
+    },
+    {
+      title: 'Management',
+      links: [
+        { path: '/admin/fees', icon: <CreditCard size={18} />, label: 'Fees Management' },
+        { path: '/admin/events', icon: <Calendar size={18} />, label: 'Events & Notices' },
+        { path: '/admin/settings', icon: <Settings size={18} />, label: 'System Settings' },
+      ]
+    }
+  ];
+
+  const sections = role === 'admin' ? adminSections : role === 'faculty' ? facultySections : studentSections;
+
+  const getThemeColor = () => {
+    if (role === 'admin') return '#F59E0B';
+    if (role === 'faculty') return 'var(--secondary)';
+    return 'var(--primary)';
+  };
+
+  const getRoleLabel = () => {
+    if (role === 'admin') return 'Administrator';
+    if (role === 'faculty') return 'Professor';
+    return 'Student';
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
+  };
+
+  const handleNotificationClick = () => {
+    if (role === 'student') {
+      navigate('/student/notifications');
+    } else if (role === 'faculty') {
+      navigate('/faculty/announcements');
+    } else {
+      navigate('/admin/dashboard');
+    }
   };
 
   return (
@@ -97,8 +142,8 @@ const DashboardLayout = () => {
         }}
       >
         <div className="p-4 d-flex align-items-center justify-content-between border-bottom">
-          <h4 className={`m-0 fw-bold ${role === 'faculty' ? 'text-secondary' : 'text-primary'}`} style={{ whiteSpace: 'nowrap' }}>
-            Smart Campus
+          <h4 className="m-0 fw-bold" style={{ whiteSpace: 'nowrap', color: getThemeColor() }}>
+            {role === 'admin' ? '🛡️ Admin Panel' : 'Smart Campus'}
           </h4>
         </div>
         
@@ -117,7 +162,7 @@ const DashboardLayout = () => {
                         to={link.path}
                         className="nav-link rounded d-flex align-items-center gap-3"
                         style={{
-                          background: isActive ? (role === 'faculty' ? 'var(--secondary)' : 'var(--primary)') : 'transparent',
+                          background: isActive ? getThemeColor() : 'transparent',
                           color: isActive ? 'white' : 'var(--text-muted)',
                           transition: 'var(--transition)',
                           fontWeight: isActive ? 600 : 500,
@@ -189,20 +234,26 @@ const DashboardLayout = () => {
           </div>
           
           <div className="d-flex align-items-center gap-3">
-            <button className="btn btn-light border-0 p-2 shadow-sm rounded-circle position-relative d-flex">
+            <button 
+              className="btn btn-light border-0 p-2 shadow-sm rounded-circle position-relative d-flex"
+              onClick={handleNotificationClick}
+              title="Notifications"
+            >
               <Bell size={20} />
               <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
             </button>
             <div className="d-flex align-items-center gap-2 ms-2">
               <div 
-                className={`text-white rounded-circle d-flex align-items-center justify-content-center fw-bold ${role === 'faculty' ? 'bg-secondary' : 'bg-primary'}`}
-                style={{ width: '40px', height: '40px' }}
+                className="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                style={{ width: '40px', height: '40px', backgroundColor: getThemeColor() }}
               >
-                {role.charAt(0).toUpperCase()}
+                {userName ? userName.charAt(0).toUpperCase() : role.charAt(0).toUpperCase()}
               </div>
               <div className="d-none d-md-block">
-                <div className="fw-bold" style={{ fontSize: '14px', lineHeight: '1.2' }}>Demo {role === 'faculty' ? 'Professor' : 'Student'}</div>
-                <div className="text-muted text-uppercase" style={{ fontSize: '11px', color: role === 'faculty' ? 'var(--secondary)' : 'var(--primary)' }}>{role}</div>
+                <div className="fw-bold" style={{ fontSize: '14px', lineHeight: '1.2' }}>
+                  {userName || getRoleLabel()}
+                </div>
+                <div className="text-uppercase" style={{ fontSize: '11px', color: getThemeColor() }}>{role}</div>
               </div>
             </div>
           </div>

@@ -5,21 +5,22 @@ const jwt = require("jsonwebtoken");
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    // 🔥 DEBUG (VERY IMPORTANT)
-    console.log("Headers:", req.headers);
-    console.log("Body raw:", req.body);
-
-    // 🔥 SAFE parsing
     const name = req.body?.name;
     const email = req.body?.email;
     const password = req.body?.password;
+    const role = req.body?.role || "student";
 
-    // ❌ Check if body is missing
+    // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({
         error: "Missing data",
         received: req.body
       });
+    }
+
+    // Only allow student or faculty registration (admin is seeded)
+    if (!["student", "faculty"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Only student or faculty registration is allowed." });
     }
 
     // Check if user exists
@@ -31,37 +32,64 @@ exports.register = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Faculty accounts need admin approval; students are approved immediately
+    const status = role === "faculty" ? "pending" : "approved";
+
     // Create user
     const user = new User({
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role,
+      status
     });
 
     await user.save();
 
+    const message = role === "faculty" 
+      ? "Faculty account created successfully. Please wait for administrator approval before logging in."
+      : "User registered successfully";
+
     res.status(201).json({
-      message: "User registered successfully",
-      user: { name, email }
+      message,
+      user: { name, email, role, status }
     });
 
   } catch (error) {
-    console.error("ERROR:", error);
+    console.error("REGISTER ERROR:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-
-
 // LOGIN
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, requestedRole } = req.body;
 
     // Check user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "User not found" });
+    }
+
+    // Validate role matches if requestedRole is provided
+    if (requestedRole && user.role !== requestedRole) {
+      return res.status(403).json({ 
+        message: `This account is registered as ${user.role}. Please use the ${user.role} login.` 
+      });
+    }
+
+    // Check faculty approval status
+    if (user.role === "faculty" && user.status === "pending") {
+      return res.status(403).json({ 
+        message: "Your faculty account is awaiting administrator approval. Please contact the principal." 
+      });
+    }
+
+    if (user.role === "faculty" && user.status === "rejected") {
+      return res.status(403).json({ 
+        message: "Your faculty account was not approved. Please contact the administration." 
+      });
     }
 
     // Compare password
@@ -72,7 +100,7 @@ exports.login = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, name: user.name, email: user.email },
       "secretkey",
       { expiresIn: "1d" }
     );

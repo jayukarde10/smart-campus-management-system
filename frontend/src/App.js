@@ -9,7 +9,6 @@ import Register from "./pages/Register";
 // Shared Modules
 import Events from "./pages/shared/Events";
 import EventDetails from "./pages/shared/EventDetails";
-import NoticeBoard from "./pages/shared/NoticeBoard";
 import Chat from "./pages/shared/Chat";
 import Profile from "./pages/shared/Profile";
 import Settings from "./pages/shared/Settings";
@@ -29,9 +28,14 @@ import FacultyDashboard from "./pages/faculty/FacultyDashboard";
 import ManageStudents from "./pages/faculty/ManageStudents";
 import ManageAttendance from "./pages/faculty/ManageAttendance";
 import UploadMarks from "./pages/faculty/UploadMarks";
-import ClassManagement from "./pages/faculty/ClassManagement";
+import ManageTimetable from "./pages/faculty/ManageTimetable";
 import Announcements from "./pages/faculty/Announcements";
 import FacultyAnalytics from "./pages/faculty/FacultyAnalytics";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminFees from "./pages/admin/AdminFees";
+import AdminNotices from "./pages/admin/AdminNotices";
 
 function App() {
   return (
@@ -54,11 +58,8 @@ function App() {
           <Route path="timetable" element={<Timetable />} />
           <Route path="fees" element={<Fees />} />
           <Route path="notifications" element={<Notifications />} />
-          
-          {/* 🔥 NEW STUDENT MODULES */}
           <Route path="analytics" element={<StudentAnalytics />} />
           <Route path="tasks" element={<PersonalTaskTracker />} />
-
           <Route path="events" element={<Events />} />
           <Route path="events/:id" element={<EventDetails />} />
           <Route path="chat" element={<Chat />} />
@@ -78,19 +79,33 @@ function App() {
           <Route path="students" element={<ManageStudents />} />
           <Route path="attendance" element={<ManageAttendance />} />
           <Route path="marks" element={<UploadMarks />} />
-          <Route path="classes" element={<ClassManagement />} />
-          <Route path="timetable" element={<ClassManagement />} /> {/* Placeholder reuse */}
+          <Route path="timetable" element={<ManageTimetable />} />
           <Route path="announcements" element={<Announcements />} />
-          
-          {/* 🔥 NEW FACULTY MODULES */}
           <Route path="analytics" element={<FacultyAnalytics />} />
-
           <Route path="events" element={<Events />} />
           <Route path="events/:id" element={<EventDetails />} />
           <Route path="communication" element={<Chat />} />
           <Route path="chat" element={<Chat />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="faculty-approvals" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminDashboard />} />
+          <Route path="fees" element={<AdminFees />} />
+          <Route path="events" element={<AdminNotices />} />
+          <Route path="notices" element={<AdminNotices />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
