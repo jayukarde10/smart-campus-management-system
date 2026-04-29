@@ -78,7 +78,7 @@ Create a `.env` file in the `backend` directory:
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://smart-campus-management-system-eosin.vercel.app
 ```
 Run the backend:
 ```bash
@@ -92,11 +92,11 @@ npm install
 ```
 Create a `.env` file in the `frontend` directory:
 ```env
-REACT_APP_API_URL=http://localhost:5000
+REACT_APP_API_URL=https://your-backend-url.onrender.com
 ```
 Run the frontend:
 ```bash
 npm start
 ```
 
-Your app will now be running on `http://localhost:3000`!
+My app is now live at: [https://smart-campus-management-system-eosin.vercel.app](https://smart-campus-management-system-eosin.vercel.app)
