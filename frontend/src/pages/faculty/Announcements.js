@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Upload, Trash2, FileText, AlertTriangle, Info, Calendar } from 'lucide-react';
-import API from '../../services/api';
+import API, { getApiUrl } from '../../services/api';
 
 const Announcements = () => {
   const [notices, setNotices] = useState([]);
@@ -136,7 +136,7 @@ const Announcements = () => {
                           {typeBadge(n.type)}
                           <small className="text-muted">{new Date(n.createdAt).toLocaleDateString()}</small>
                           {n.fileUrl && (
-                            <a href={`http://localhost:5000${n.fileUrl}`} target="_blank" rel="noreferrer"
+                            <a href={`${getApiUrl()}${n.fileUrl}`} target="_blank" rel="noreferrer"
                               className="badge bg-light text-primary border d-flex align-items-center gap-1 text-decoration-none">
                               <FileText size={12}/> {n.fileName || 'Download PDF'}
                             </a>

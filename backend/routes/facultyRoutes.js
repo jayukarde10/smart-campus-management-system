@@ -196,7 +196,7 @@ router.delete("/events/:id", authMiddleware, facultyOnly, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// ============ STUDENTS LIST ============
+// ============ STUDENTS MANAGEMENT (Faculty) ============
 
 router.get("/students", authMiddleware, facultyOnly, async (req, res) => {
   try {
@@ -205,6 +205,34 @@ router.get("/students", authMiddleware, facultyOnly, async (req, res) => {
       $or: [{ status: "approved" }, { status: { $exists: false } }]
     }).select("-password").sort({ name: 1 });
     res.json(students);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Edit student details
+router.put("/students/:id", authMiddleware, facultyOnly, async (req, res) => {
+  try {
+    const { name, email, phone, department, year } = req.body;
+    const student = await User.findOne({ _id: req.params.id, role: "student" });
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (name) student.name = name;
+    if (email) student.email = email;
+    if (phone !== undefined) student.phone = phone;
+    if (department !== undefined) student.department = department;
+    if (year !== undefined) student.year = year;
+    await student.save();
+    const updated = student.toObject();
+    delete updated.password;
+    res.json({ message: "Student updated", student: updated });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Delete student account
+router.delete("/students/:id", authMiddleware, facultyOnly, async (req, res) => {
+  try {
+    const student = await User.findOne({ _id: req.params.id, role: "student" });
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "Student account deleted" });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 

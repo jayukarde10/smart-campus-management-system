@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, AlertTriangle, Calendar, Info, FileText, Download } from 'lucide-react';
-import API from '../../services/api';
+import API, { getApiUrl } from '../../services/api';
 
 const Notifications = () => {
   const [notices, setNotices] = useState([]);
@@ -84,7 +84,7 @@ const Notifications = () => {
                     </small>
                     {n.createdByName && <small className="text-muted">By: <strong>{n.createdByName}</strong></small>}
                     {n.fileUrl && (
-                      <a href={`http://localhost:5000${n.fileUrl}`} target="_blank" rel="noreferrer"
+                      <a href={`${getApiUrl()}${n.fileUrl}`} target="_blank" rel="noreferrer"
                         className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 rounded-pill px-3">
                         <Download size={14} /> {n.fileName || 'Download PDF'}
                       </a>

@@ -31,7 +31,11 @@ const ManageAttendance = () => {
 
   const presentCount = students.filter(s => s.status === 'present').length;
 
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 3000); };
+  const handleSave = () => { 
+    setSaved(true); 
+    setStudents(prev => prev.map(s => ({ ...s, status: 'present' })));
+    setTimeout(() => setSaved(false), 3000); 
+  };
 
   if (loading) return <div className="d-flex justify-content-center py-5"><div className="spinner-border text-secondary"></div></div>;
 

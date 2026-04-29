@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, BookOpen, Clock, Download, FileText, Image } from 'lucide-react';
-import API from '../../services/api';
+import API, { getApiUrl } from '../../services/api';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_COLORS = {
@@ -60,7 +60,7 @@ const Timetable = () => {
                   <div className="fw-bold" style={{ fontSize: '14px' }}>{f.title}</div>
                   <small className="text-muted">{f.fileName} — {new Date(f.createdAt).toLocaleDateString()}</small>
                 </div>
-                <a href={`http://localhost:5000${f.fileUrl}`} target="_blank" rel="noreferrer"
+                <a href={`${getApiUrl()}${f.fileUrl}`} target="_blank" rel="noreferrer"
                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 fw-bold">
                   <Download size={14}/> Download
                 </a>

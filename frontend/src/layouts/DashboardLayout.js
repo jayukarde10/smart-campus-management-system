@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import API, { getApiUrl } from '../services/api';
 import { 
   LayoutDashboard, Users, BookOpen, Calendar, 
   CreditCard, Bell, MessageSquare, Settings, 
@@ -10,17 +11,35 @@ import {
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [unreads, setUnreads] = useState({ notices: 0, events: 0, marks: 0 });
   const location = useLocation();
   const navigate = useNavigate();
   
   const token = localStorage.getItem('token');
   let role = 'student';
   let userName = '';
+  let decoded = {};
   try {
-    const decoded = jwtDecode(token);
+    decoded = jwtDecode(token);
     role = decoded.role || 'student';
     userName = decoded.name || '';
   } catch (e) {}
+
+  const [userAvatar, setUserAvatar] = useState(decoded.avatar);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await API.get('/profile');
+        if (res.data && res.data.avatar) setUserAvatar(res.data.avatar);
+      } catch (e) {}
+    };
+    if (token) fetchProfile();
+
+    const handleAvatarUpdate = (e) => setUserAvatar(e.detail);
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+    return () => window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+  }, [token]);
 
   const studentSections = [
     {
@@ -110,7 +129,37 @@ const DashboardLayout = () => {
     navigate('/');
   };
 
+  useEffect(() => {
+    const fetchUnreads = async () => {
+      try {
+        if (role === 'student') {
+          const [noticesRes, eventsRes, marksRes] = await Promise.all([
+            API.get('/student/notices').catch(() => ({ data: [] })),
+            API.get('/student/events').catch(() => ({ data: [] })),
+            API.get('/student/marks').catch(() => ({ data: [] }))
+          ]);
+          
+          const checkCount = (arr, key) => {
+            const lastViewed = localStorage.getItem(key) || 0;
+            return arr.filter(item => item.createdAt && new Date(item.createdAt).getTime() > new Date(lastViewed).getTime()).length;
+          };
+
+          setUnreads({
+            notices: checkCount(noticesRes.data, 'lastViewedNotices'),
+            events: checkCount(eventsRes.data, 'lastViewedEvents'),
+            marks: checkCount(marksRes.data, 'lastViewedMarks')
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch unreads", e);
+      }
+    };
+    fetchUnreads();
+  }, [location.pathname, role]);
+
   const handleNotificationClick = () => {
+    localStorage.setItem('lastViewedNotices', new Date().toISOString());
+    setUnreads(prev => ({ ...prev, notices: 0 }));
     if (role === 'student') {
       navigate('/student/notifications');
     } else if (role === 'faculty') {
@@ -156,11 +205,31 @@ const DashboardLayout = () => {
               <ul className="nav flex-column gap-1">
                 {section.links.map((link) => {
                   const isActive = location.pathname.startsWith(link.path);
+                  let badgeCount = 0;
+                  if (link.path.includes('notifications') || link.path.includes('announcements')) badgeCount = unreads.notices;
+                  if (link.path.includes('events')) badgeCount = unreads.events;
+                  if (link.path.includes('marks')) badgeCount = unreads.marks;
+
                   return (
                     <li className="nav-item" key={link.path}>
                       <Link 
                         to={link.path}
-                        className="nav-link rounded d-flex align-items-center gap-3"
+                        onClick={() => {
+                          const now = new Date().toISOString();
+                          if (link.path.includes('notifications') || link.path.includes('announcements')) {
+                            localStorage.setItem('lastViewedNotices', now);
+                            setUnreads(prev => ({ ...prev, notices: 0 }));
+                          }
+                          if (link.path.includes('events')) {
+                            localStorage.setItem('lastViewedEvents', now);
+                            setUnreads(prev => ({ ...prev, events: 0 }));
+                          }
+                          if (link.path.includes('marks')) {
+                            localStorage.setItem('lastViewedMarks', now);
+                            setUnreads(prev => ({ ...prev, marks: 0 }));
+                          }
+                        }}
+                        className="nav-link rounded d-flex align-items-center justify-content-between"
                         style={{
                           background: isActive ? getThemeColor() : 'transparent',
                           color: isActive ? 'white' : 'var(--text-muted)',
@@ -170,8 +239,13 @@ const DashboardLayout = () => {
                           fontSize: '14px'
                         }}
                       >
-                        {link.icon}
-                        <span style={{ whiteSpace: 'nowrap' }}>{link.label}</span>
+                        <div className="d-flex align-items-center gap-3">
+                          {link.icon}
+                          <span style={{ whiteSpace: 'nowrap' }}>{link.label}</span>
+                        </div>
+                        {badgeCount > 0 && (
+                          <span className="badge bg-danger rounded-pill">{badgeCount}</span>
+                        )}
                       </Link>
                     </li>
                   )
@@ -240,14 +314,20 @@ const DashboardLayout = () => {
               title="Notifications"
             >
               <Bell size={20} />
-              <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+              {unreads.notices > 0 && (
+                <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+              )}
             </button>
             <div className="d-flex align-items-center gap-2 ms-2">
               <div 
-                className="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                style={{ width: '40px', height: '40px', backgroundColor: getThemeColor() }}
+                className="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold overflow-hidden"
+                style={{ width: '40px', height: '40px', backgroundColor: getThemeColor(), border: '2px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
               >
-                {userName ? userName.charAt(0).toUpperCase() : role.charAt(0).toUpperCase()}
+                {userAvatar ? (
+                  <img src={`${getApiUrl()}${userAvatar}`} alt="Avatar" className="w-100 h-100 object-fit-cover" />
+                ) : (
+                  userName ? userName.charAt(0).toUpperCase() : role.charAt(0).toUpperCase()
+                )}
               </div>
               <div className="d-none d-md-block">
                 <div className="fw-bold" style={{ fontSize: '14px', lineHeight: '1.2' }}>
